@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MIN, addDays, dayKey, dayStart, overlapMs, summarizeDay } from '../src/lib/server/time';
+import { MIN, addDays, dayKey, dayStart, tokenProgress } from '../src/lib/server/time';
 
 const TZ = 'America/Sao_Paulo'; // UTC-3
 const t = (iso: string) => new Date(iso).getTime();
@@ -17,30 +17,24 @@ describe('dias no fuso', () => {
 	});
 });
 
-describe('uso', () => {
-	it('soma sessões fechadas e abertas', () => {
-		const now = t('2026-03-10T15:00:00Z');
-		const s = summarizeDay({
-			sessions: [
-				{ start: t('2026-03-10T12:00:00Z'), end: t('2026-03-10T12:30:00Z') },
-				{ start: t('2026-03-10T14:40:00Z'), end: null }
-			],
-			adjustmentMin: 0, limitMin: 60, now, day: '2026-03-10', tz: TZ
-		});
-		expect(s.usedMs).toBe(50 * MIN);
-		expect(s.running).toBe(true);
-		expect(s.remainingMs).toBe(10 * MIN);
-		expect(s.exceeded).toBe(false);
+describe('progresso da ficha', () => {
+	it('ficha parada não consome tempo', () => {
+		const p = tokenProgress({ minutes: 30, consumedMs: 0, startedMs: null }, 999_999);
+		expect(p).toMatchObject({ remainingMs: 30 * MIN, running: false, finished: false, endsAtMs: null });
 	});
-	it('divide sessão que atravessa a meia-noite', () => {
-		const sess = [{ start: t('2026-03-10T02:30:00Z'), end: t('2026-03-10T03:30:00Z') }];
-		const from = dayStart('2026-03-10', TZ);
-		expect(overlapMs(sess, from, from + 86_400_000, 0)).toBe(30 * MIN);
-		expect(overlapMs(sess, from - 86_400_000, from, 0)).toBe(30 * MIN);
+	it('contagem regressiva pelo relógio do servidor', () => {
+		const p = tokenProgress({ minutes: 30, consumedMs: 0, startedMs: 1000 }, 1000 + 10 * MIN);
+		expect(p.remainingMs).toBe(20 * MIN);
+		expect(p.running).toBe(true);
+		expect(p.endsAtMs).toBe(1000 + 30 * MIN);
 	});
-	it('ajustes entram e o uso nunca fica negativo', () => {
-		const base = { sessions: [], limitMin: 30, now: 0, day: '2026-03-10', tz: TZ };
-		expect(summarizeDay({ ...base, adjustmentMin: 40 }).exceeded).toBe(true);
-		expect(summarizeDay({ ...base, adjustmentMin: -10 }).usedMs).toBe(0);
+	it('considera o tempo já gasto antes da pausa', () => {
+		const p = tokenProgress({ minutes: 30, consumedMs: 12 * MIN, startedMs: 5000 }, 5000 + 3 * MIN);
+		expect(p.remainingMs).toBe(15 * MIN);
+		expect(p.endsAtMs).toBe(5000 + 18 * MIN);
+	});
+	it('termina exatamente no zero e nunca fica negativa', () => {
+		const p = tokenProgress({ minutes: 30, consumedMs: 0, startedMs: 0 }, 45 * MIN);
+		expect(p).toMatchObject({ finished: true, running: false, remainingMs: 0, elapsedMs: 30 * MIN });
 	});
 });

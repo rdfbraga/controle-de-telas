@@ -6,7 +6,7 @@ import { addChild, getState } from '../../../lib/server/service';
 export async function POST({ request }) {
 	const b = await request.json().catch(() => ({}));
 	try {
-		addChild(getDb(), String(b.name ?? ''), Number(b.defaultLimitMin ?? 60));
+		addChild(getDb(), String(b.name ?? ''), b.template);
 	} catch (e) {
 		error(400, (e as Error).message);
 	}

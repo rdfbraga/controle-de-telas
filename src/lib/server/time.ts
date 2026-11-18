@@ -39,53 +39,32 @@ export function dayStart(key: string, tz: string): number {
 	return guess;
 }
 
-export interface Session {
-	start: number;
-	end: number | null; // null = em andamento
+export interface TokenTime {
+	minutes: number;
+	consumedMs: number; // tempo gasto até a última pausa
+	startedMs: number | null; // início da contagem em andamento (null = parada)
 }
 
-/** Milissegundos de uso de `sessions` dentro de [from, to), com `now` para sessões abertas. */
-export function overlapMs(sessions: Session[], from: number, to: number, now: number): number {
-	let total = 0;
-	for (const s of sessions) {
-		const a = Math.max(s.start, from);
-		const b = Math.min(s.end ?? now, to);
-		if (b > a) total += b - a;
-	}
-	return total;
-}
-
-export interface DayInput {
-	sessions: Session[];
-	adjustmentMin: number; // soma dos ajustes manuais do dia (pode ser negativa)
-	limitMin: number;
-	now: number;
-	day: string;
-	tz: string;
-}
-
-export interface DaySummary {
-	usedMs: number;
-	limitMs: number;
+export interface TokenProgress {
+	elapsedMs: number;
 	remainingMs: number;
-	exceeded: boolean;
+	finished: boolean;
 	running: boolean;
-	runningSince: number | null;
+	/** Instante (epoch ms) em que a contagem chega a zero; só se estiver rodando. */
+	endsAtMs: number | null;
 }
 
-export function summarizeDay(i: DayInput): DaySummary {
-	const from = dayStart(i.day, i.tz);
-	const to = dayStart(addDays(i.day, 1), i.tz);
-	const measured = overlapMs(i.sessions, from, to, i.now);
-	const usedMs = Math.max(0, measured + i.adjustmentMin * MIN);
-	const limitMs = Math.max(0, i.limitMin) * MIN;
-	const open = i.sessions.find((s) => s.end === null);
+/** Progresso de uma ficha, calculado só com timestamps (independe de contadores do cliente). */
+export function tokenProgress(t: TokenTime, now: number): TokenProgress {
+	const total = t.minutes * MIN;
+	const elapsed = t.consumedMs + (t.startedMs !== null ? Math.max(0, now - t.startedMs) : 0);
+	const finished = elapsed >= total;
+	const running = t.startedMs !== null && !finished;
 	return {
-		usedMs,
-		limitMs,
-		remainingMs: limitMs - usedMs,
-		exceeded: usedMs > limitMs,
-		running: !!open,
-		runningSince: open ? open.start : null
+		elapsedMs: Math.min(elapsed, total),
+		remainingMs: Math.max(0, total - elapsed),
+		finished,
+		running,
+		endsAtMs: running ? t.startedMs! + (total - t.consumedMs) : null
 	};
 }
