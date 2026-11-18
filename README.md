@@ -2,7 +2,7 @@
 
 Webapp para pais e responsáveis acompanharem e operarem o tempo diário de tela das crianças, de qualquer navegador (celular, tablet, desktop), em vários dispositivos ao mesmo tempo. Uma mudança feita em um aparelho aparece nos outros em tempo quase real.
 
-> **Status (MVP):** sem autenticação. Qualquer pessoa que acessar o endereço do app opera a mesma família. Use apenas em rede privada ou atrás de um proxy com senha até a autenticação ser implementada.
+> **Acesso:** protegido por um **PIN da família** (sem usuário/senha). Defina `PIN_FAMILIA` no arquivo `.env`; sem PIN o app fica aberto (use assim só em rede local).
 
 ## Como rodar
 
@@ -12,10 +12,14 @@ Requer Node 22.13 ou mais novo (usa o SQLite embutido do Node, sem compilar nada
 npm install
 npm run dev        # desenvolvimento em http://localhost:5173
 npm test           # testes da lógica de tempo e do estado diário
-npm run build && npm start   # produção (porta 3000, ou PORT=...)
+npm run build && npm start   # produção (porta 3000, ou PORT=...); lê o .env
 ```
 
-Variáveis opcionais:
+Copie `.env.example` para `.env` e escolha o PIN (`PIN_FAMILIA=1234`). Quem abrir o app digita o PIN uma vez; o navegador lembra por 1 ano. Trocar o PIN desconecta todos. Após 5 erros seguidos, a origem fica bloqueada por 5 minutos. Use HTTPS ao expor na internet (o PIN trafega no login).
+
+Variáveis:
+
+- `PIN_FAMILIA` — PIN de acesso (vazio = sem proteção).
 
 - `DATABASE_PATH` — arquivo do SQLite (padrão `data/telas.db`; faça backup/volume persistente dele).
 - `TZ_FAMILIA` — fuso da família, usado só na criação do banco (padrão `America/Sao_Paulo`).
@@ -52,5 +56,5 @@ tests/                      Vitest
 
 ## Próximos passos
 
-- Autenticação dos responsáveis e convite/código de família (adiado por pedido).
+- Contas individuais por responsável (hoje é um PIN compartilhado).
 - Histórico por dia, limites por dia da semana, notificações ao estourar o limite.

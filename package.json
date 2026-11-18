@@ -5,9 +5,9 @@
   "type": "module",
   "scripts": {
     "prepare": "svelte-kit sync || true",
-    "dev": "vite dev",
+    "dev": "node --env-file-if-exists=.env node_modules/vite/bin/vite.js dev",
     "build": "vite build",
-    "start": "node build",
+    "start": "node --env-file-if-exists=.env build",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "test": "svelte-kit sync && vitest run"
   },

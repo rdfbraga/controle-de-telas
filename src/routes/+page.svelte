@@ -22,7 +22,9 @@
 	}
 	async function load() {
 		try {
-			apply(await (await fetch('/api/state')).json());
+			const r = await fetch('/api/state');
+			if (r.status === 401) { location.href = '/entrar'; return; }
+			apply(await r.json());
 			error = '';
 		} catch {
 			error = 'Sem conexão com o servidor';
@@ -30,6 +32,7 @@
 	}
 	async function post(url: string, body: object) {
 		const r = await fetch(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+		if (r.status === 401) { location.href = '/entrar'; return; }
 		if (!r.ok) { error = (await r.json().catch(() => ({ message: 'Erro' }))).message; return; }
 		error = '';
 		apply(await r.json());
