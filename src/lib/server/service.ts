@@ -52,7 +52,7 @@ export function getState(db: DB, now = Date.now()): AppState {
 			| undefined;
 		const sessions = db
 			.prepare('SELECT start_ms AS start, end_ms AS end FROM usage_session WHERE child_id = ? AND (end_ms IS NULL OR end_ms > ?)')
-			.all(c.id, now - 3 * 86_400_000) as Session[];
+			.all(c.id, now - 3 * 86_400_000) as unknown as Session[];
 		const adj = (
 			db.prepare('SELECT COALESCE(SUM(minutes),0) AS s FROM time_adjustment WHERE child_id = ? AND day = ?').get(c.id, day) as { s: number }
 		).s;
