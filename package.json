@@ -1,0 +1,29 @@
+{
+  "name": "controle-de-telas",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "prepare": "svelte-kit sync || true",
+    "dev": "vite dev",
+    "build": "vite build",
+    "start": "node build",
+    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+    "test": "svelte-kit sync && vitest run"
+  },
+  "devDependencies": {
+    "@sveltejs/adapter-node": "^6.0.4",
+    "@sveltejs/kit": "^3.3.1",
+    "@sveltejs/vite-plugin-svelte": "^7.3.1",
+    "@types/better-sqlite3": "^9.6.0",
+    "@types/node": "^26.6.6",
+    "svelte": "^5.58.0",
+    "svelte-check": "^4.7.8",
+    "typescript": "^6.0.3",
+    "vite": "^8.3.8",
+    "vitest": "^5.1.1"
+  },
+  "dependencies": {
+    "better-sqlite3": "^13.2.0"
+  }
+}
