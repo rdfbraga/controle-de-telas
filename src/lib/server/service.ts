@@ -78,7 +78,8 @@ export function applyAction(db: DB, childId: number, action: Action, now = Date.
 		'INSERT INTO day_state (child_id, day, limit_min, finished) VALUES (?, ?, NULL, 0) ON CONFLICT(child_id, day) DO NOTHING'
 	);
 
-	db.transaction(() => {
+	db.exec('BEGIN IMMEDIATE');
+	try {
 		setDay.run(childId, day);
 		switch (action.type) {
 			case 'start': {
@@ -114,7 +115,11 @@ export function applyAction(db: DB, childId: number, action: Action, now = Date.
 			default:
 				throw new Error('Ação desconhecida');
 		}
-	})();
+		db.exec('COMMIT');
+	} catch (e) {
+		db.exec('ROLLBACK');
+		throw e;
+	}
 	return getState(db, now);
 }
 

@@ -6,7 +6,7 @@ Webapp para pais e responsáveis acompanharem e operarem o tempo diário de tela
 
 ## Como rodar
 
-Requer Node 22+.
+Requer Node 22.13 ou mais novo (usa o SQLite embutido do Node, sem compilar nada).
 
 ```bash
 npm install
@@ -33,7 +33,7 @@ O campo "Quem está operando?" é opcional e fica só no aparelho; serve para re
 ## Decisões de arquitetura
 
 - **SvelteKit + TypeScript** (adapter Node): um único processo serve UI e API. Pouco código, pouca dependência.
-- **SQLite** (`better-sqlite3`), um arquivo só: custo zero e fácil de fazer backup. Limitação: exige uma única instância do servidor, o que é suficiente para uso familiar. Se for preciso, migrar para Postgres/Turso afeta apenas `src/lib/server/db.ts` e `service.ts`.
+- **SQLite embutido do Node** (`node:sqlite`, sem dependência nativa), um arquivo só: custo zero e fácil de fazer backup. Limitação: exige uma única instância do servidor, o que é suficiente para uso familiar. Se for preciso, migrar para Postgres/Turso afeta apenas `src/lib/server/db.ts` e `service.ts`.
 - **Cronômetro baseado em timestamps do servidor**: cada sessão de uso guarda `start_ms`/`end_ms` (nulo enquanto roda). O tempo usado do dia é a soma das sessões que caem dentro do dia (sessões que cruzam a meia-noite são divididas) mais os ajustes manuais. O cliente só anima o contador a partir do horário do servidor; abas fechadas ou vários aparelhos não causam divergência.
 - **Tempo real por SSE** (`/api/events`): o servidor avisa "mudou" e cada cliente busca `/api/state`. Também recarrega ao voltar para a aba e ao reconectar.
 - **Dia local**: o "dia" segue o fuso da família (`family.timezone`).

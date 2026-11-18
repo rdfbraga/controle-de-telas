@@ -1,8 +1,8 @@
-import Database from 'better-sqlite3';
+import { DatabaseSync } from 'node:sqlite';
 import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 
-export type DB = Database.Database;
+export type DB = DatabaseSync;
 
 const SCHEMA = `
 CREATE TABLE IF NOT EXISTS family (
@@ -43,9 +43,8 @@ CREATE TABLE IF NOT EXISTS time_adjustment (
 
 export function openDb(path: string, tz = 'America/Sao_Paulo'): DB {
 	if (path !== ':memory:') mkdirSync(dirname(path), { recursive: true });
-	const db = new Database(path);
-	db.pragma('journal_mode = WAL');
-	db.pragma('foreign_keys = ON');
+	const db = new DatabaseSync(path);
+	db.exec('PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;');
 	db.exec(SCHEMA);
 	db.prepare('INSERT OR IGNORE INTO family (id, name, timezone) VALUES (1, ?, ?)').run('Minha família', tz);
 	return db;
